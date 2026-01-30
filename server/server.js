@@ -62,14 +62,25 @@ if (process.env.NODE_ENV === 'production') {
       res.sendFile(path.join(buildPath, 'index.html'));
     });
   } else {
-    // Build doesn't exist yet, show API info
+    // Build doesn't exist, try to build it
+    const { exec } = require('child_process');
+    console.log('Building frontend...');
+    
+    exec('cd ../client && npm install && npm run build', (error, stdout, stderr) => {
+      if (error) {
+        console.error('Build error:', error);
+        return;
+      }
+      console.log('Frontend built successfully');
+    });
+    
     app.get('*', (req, res) => {
       res.json({ 
         message: 'Portfolio Management System',
-        status: 'Frontend building... Please refresh in 2-3 minutes',
+        status: 'Building frontend... Please refresh in 3-5 minutes',
         environment: process.env.NODE_ENV || 'development',
         endpoints: ['/health', '/api/projects', '/api/clients'],
-        note: 'React frontend is being built. Please wait and refresh.'
+        note: 'React frontend is being built automatically. Please wait and refresh.'
       });
     });
   }
