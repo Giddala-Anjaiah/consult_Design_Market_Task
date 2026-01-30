@@ -51,11 +51,28 @@ app.get('/health', (req, res) => {
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/build')));
+  const buildPath = path.join(__dirname, '../client/build');
   
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
-  });
+  // Check if build directory exists
+  const fs = require('fs');
+  if (fs.existsSync(buildPath)) {
+    app.use(express.static(buildPath));
+    
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(buildPath, 'index.html'));
+    });
+  } else {
+    // Build doesn't exist yet, show API info
+    app.get('*', (req, res) => {
+      res.json({ 
+        message: 'Portfolio Management System',
+        status: 'Frontend building... Please refresh in 2-3 minutes',
+        environment: process.env.NODE_ENV || 'development',
+        endpoints: ['/health', '/api/projects', '/api/clients'],
+        note: 'React frontend is being built. Please wait and refresh.'
+      });
+    });
+  }
 } else {
   // For development, serve a simple response
   app.get('*', (req, res) => {
