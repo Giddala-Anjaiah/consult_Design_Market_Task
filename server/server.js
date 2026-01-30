@@ -22,11 +22,26 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Routes
 app.use('/api', require('./routes/api'));
 
+// Health check route
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Portfolio Management System is running',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
+  
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
+  });
+} else {
+  // For development, serve the React app
+  app.get('*', (req, res) => {
+    res.send('Portfolio Management System - Development Mode');
   });
 }
 
