@@ -12,15 +12,33 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('MongoDB connected');
+  } catch (err) {
+    console.error('MongoDB connection error:', err);
+    // Don't exit the app, continue running
+  }
+};
+
+connectDB();
 
 // Routes
 app.use('/api', require('./routes/api'));
+
+// Root route - always respond
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Portfolio Management System API',
+    status: 'Running',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: ['/health', '/api/projects', '/api/clients']
+  });
+});
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -39,9 +57,13 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
 } else {
-  // For development, serve the React app
+  // For development, serve a simple response
   app.get('*', (req, res) => {
-    res.send('Portfolio Management System - Development Mode');
+    res.json({ 
+      message: 'Portfolio Management System API',
+      status: 'Running in development mode',
+      endpoints: ['/health', '/api/projects', '/api/clients']
+    });
   });
 }
 
